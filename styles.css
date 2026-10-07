@@ -1,0 +1,49 @@
+
+body {
+  background-color: aquamarine;
+
+}
+
+#playing-cards {
+  display:flex;
+  justify-content:center;
+  flex-wrap:wrap;
+  gap:20px;
+  background-color: brown;
+  padding: 20px;
+}
+
+.card {
+  display:flex;
+  justify-content:space-between;
+  width: 150px;
+  height:210px;
+  background-color: white;
+  box-shadow: 10px 10px 10px black;
+  padding: 5px;
+  border-radius: 5px;
+}
+
+.left {
+  align-self:flex-start;
+  font-size: 25px;
+
+}
+
+.middle {
+  align-self:center;
+  display:flex;
+  flex-direction:column;
+  font-size:70px;
+}
+
+.right {
+  align-self:flex-end;
+  font-size: 25px;
+  transform: rotate(180);
+}
+
+#A-Card ,#Q-Card ,#J-Card ,#C9-Card ,#C7-Card,#C3-Card{
+  color:red;
+}
+
