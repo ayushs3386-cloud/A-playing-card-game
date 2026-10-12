@@ -170,7 +170,9 @@ const cardRemoverFromSource = ()=> {
         gameState.tableau[gameState.sourceIndex].splice(gameState.selectedCardIndexInSource);
     }else if (gameState.sourceType === "waste") {
         gameState.waste.pop();
-    } 
+    } else if (gameState.sourceType === "foundation") {
+        gameState.foundations[gameState.sourceIndex].pop();
+    }
 }
 
 
@@ -211,12 +213,14 @@ const dropCardOnTableau = (index) => {
     const movingCards = gameState.selectedCards;
     cardRemoverFromSource();
     gameState.tableau[index].push(...movingCards);
-    updateScore(gameState.sourceType==="waste" ? 5 : 0);
+    const points = gameState.sourceType === "waste" ? 5 : gameState.sourceType === "foundation" ? -15 : 0;
+    updateScore(points);
     saveData();
     return true;
 } 
 
 const dropCardOnFoundation = (index) => {
+    if (gameState.sourceType === "foundation") return false;
         if (!gameState.isSelected || gameState.selectedCards.length === 0) return false;
 
 
@@ -250,6 +254,7 @@ document.addEventListener("pointerdown", (e)=> {
     const id = parseInt(cardEl.id);
 
     const tableauEl = cardEl.closest(".tableau");
+    const foundationEl = cardEl.closest(".foundation-pile");
     const wasteEl = cardEl.closest("#waste-pile");
 
     if (tableauEl) {
@@ -270,6 +275,17 @@ document.addEventListener("pointerdown", (e)=> {
         gameState.sourceType = "waste";
         gameState.sourceIndex = "null";
         gameState.selectedCardIndexInSource = gameState.waste.length - 1;
+        gameState.selectedCards = [topCard];
+    }
+    else if (foundationEl) {
+        const index = parseInt(foundationEl.id.split("-")[2]);
+        const pile = gameState.foundations[index];
+        const topCard = pile[pile.length - 1];
+        if (!topCard || topCard.id !== id) return;
+
+        gameState.sourceType = "foundation";
+        gameState.sourceIndex = index;
+        gameState.selectedCardIndexInSource = pile.length - 1;
         gameState.selectedCards = [topCard];
     }
     else {
