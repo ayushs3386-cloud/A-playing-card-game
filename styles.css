@@ -7,7 +7,7 @@
     --card-height: calc(var(--card-width) * 1.5 );
 
     --card-overlap: calc(var(--card-height) * -0.71);
-    --card-font: calc(var(--card-width) * 0.3);
+    --card-font: calc(var(--card-width) * 0.25);
     --waste-offset: calc(var(--card-width) * 0.42);
 }
 
@@ -133,6 +133,7 @@ background-color: rgba(238, 232, 232, 0.104);
 border:1px dashed rgba(251, 249, 249, 0.43);
 width:var(--card-width);
 height:var(--card-height);
+box-sizing: border-box;
 
 }
 .foundation-pile .card {
@@ -185,11 +186,13 @@ height:var(--card-height);
 .waste-pile .card:nth-child(1) {left:0px}
 .waste-pile .card:nth-child(2) {left:var(--waste-offset)}
 .waste-pile .card:nth-child(3) {left:calc(var(--waste-offset) * 2)}
-.tableau {min-height: 120px;};
+.tableau {min-height: 120px;}
  
 .interactive-ui-container {
     display: flex;
     flex-basis: 100%;
+    flex-wrap: wrap;
+    gap: var(--gap);
     justify-content: space-between;
     align-items: center;
 }
@@ -201,6 +204,10 @@ height:var(--card-height);
 #reset-button {
     padding: 8px 14px;
     font-size:16px;
+}
+#mode-select {
+    padding: 8px;
+    font-size: 16px;
 }
 .drag-ghost {
     position:fixed;
@@ -214,6 +221,6 @@ height:var(--card-height);
 .drag-ghost .card + .card {
     margin-top: var(--card-overlap);
 }
-.drag.drag-hidden {
+.card.drag-hidden {
     opacity:0.25;
 }
