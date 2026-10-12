@@ -1,7 +1,20 @@
+
+:root {
+    --board-padding: 8px;
+    --gap: 4px;
+
+    --card-width: min(80px, calc((100vw - (2* var(--board-padding)) - (6* var(--gap))) /7 ));
+    --card-height: calc(var(--card-width) * 1.5 );
+
+    --card-overlap: calc(var(--card-height) * -0.71);
+    --card-font: calc(var(--card-width) * 0.3);
+    --waste-offset: calc(var(--card-width) * 0.42);
+}
+
 body {
     background-image:linear-gradient(90deg,#076324,#0f5132) ;
     margin:0;
-    padding:20px;
+    padding:var(--board-padding);
     font-family: sans-serif;
 }
 
@@ -10,10 +23,13 @@ body {
     max-width:800px;
     margin:0 auto;
     flex-direction: column;
-    gap:40px;
+    gap:calc(var(--gap) * 4);
 }
 .top-row {
     display:flex;
+    flex-wrap: wrap;
+    gap:var(--gap);
+    row-gap: calc(var(--gap) * 3);
     justify-content: space-between;
     flex-direction: row;
     
@@ -22,33 +38,43 @@ body {
     display:flex;
     flex-direction: row;
     align-items: flex-start;
-    gap:15px;
+    gap:var(--gap);
 }
 .foundation-pile-container {
     display:grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(4, var(--card-width));
+    gap:var(--gap);
 }
 .tableau-container {
     display:grid;
-    grid-template-columns: repeat(7,1fr);
+    grid-template-columns: repeat(7,var(--card-width));
+    gap: var(--gap);
+    justify-content: center;
 }
 .tableau {
     display:flex;
-
+    min-height: var(--card-height);
     flex-direction: column;
     gap: 0;
     
 }
 .card {
     
-    width:80px;
-    height:120px;
-    
+    width:var(--card-width);
+    height:var(--card-height);
+    font-size: var(--card-font);
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select:none;
+    -webkit-touch-callout: none;
     
 }
+
+
 .tableau .card + .card {
-    margin-top: -85px;
+    margin-top: var(--card-overlap);
 }
+
 .face-up-card{
     display:flex;
     background-color: whitesmoke;
@@ -105,8 +131,8 @@ position: relative;
 border-radius: 4px;
 background-color: rgba(238, 232, 232, 0.104);
 border:1px dashed rgba(251, 249, 249, 0.43);
-width:80px;
-height:120px;
+width:var(--card-width);
+height:var(--card-height);
 
 }
 .foundation-pile .card {
@@ -122,14 +148,14 @@ height:120px;
     
     display:flex;
     background-color: rgb(224, 131, 9);
-    width:80px;
-    height:120px;
+    width:var(--card-width);
+    height:var(--card-height);
     text-align: center;
     justify-content: center;
     align-items: center;
     padding:2px;
     margin:0;
-    margin-right: 10px;
+    
     flex-shrink: 0;
     box-sizing: border-box;
     border:1px solid black;
@@ -148,8 +174,8 @@ height:120px;
     display:flex;
     position:relative;
     flex-direction: row;
-    width:160px;
-    height:120px;
+    width:calc(var(--card-width) * 1.9);
+    height:var(--card-height);
     gap: 0;
     
 }
@@ -157,11 +183,37 @@ height:120px;
     position: absolute;
 }
 .waste-pile .card:nth-child(1) {left:0px}
-.waste-pile .card:nth-child(2) {left:25px}
-.waste-pile .card:nth-child(3) {left:50px}
+.waste-pile .card:nth-child(2) {left:var(--waste-offset)}
+.waste-pile .card:nth-child(3) {left:calc(var(--waste-offset) * 2)}
 .tableau {min-height: 120px;};
  
 .interactive-ui-container {
     display: flex;
-    flex-direction: row;
+    flex-basis: 100%;
+    justify-content: space-between;
+    align-items: center;
+}
+#game-score {
+    color:white;
+    font-weight: bold;
+    font-size: 18px;
+}
+#reset-button {
+    padding: 8px 14px;
+    font-size:16px;
+}
+.drag-ghost {
+    position:fixed;
+    top:0;
+    left:0;
+    z-index:1000;
+    pointer-events: none;
+    display: flex;
+    flex-direction: column;
+}
+.drag-ghost .card + .card {
+    margin-top: var(--card-overlap);
+}
+.drag.drag-hidden {
+    opacity:0.25;
 }
