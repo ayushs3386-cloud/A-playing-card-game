@@ -45,6 +45,7 @@ const gameState = {
     tableau:[[],[],[],[],[],[],[]],
     foundations: [[],[],[],[]],
     score:0,
+    drawCount: 3,
 
     isSelected: false,
     selectedCards: [],
@@ -147,7 +148,7 @@ const wastePile = getElement("waste-pile","id");
 handleDeckPile();
 gameState.waste.forEach((currentCard,index,wasteArr)=> currentCard.isDraggable= index===wasteArr.length-1)
 
-const wastePileCards = gameState.waste.slice(-3).map((cardInfo)=> cardElementCreator(cardInfo)).join("");
+const wastePileCards = gameState.waste.slice(-gameState.drawCount).map((cardInfo)=> cardElementCreator(cardInfo)).join("");
 wastePile.innerHTML = gameState.waste.length>0 ? wastePileCards : "";
 };
 
@@ -230,9 +231,7 @@ const dropCardOnFoundation = (index) => {
             gameState.foundations[index].push(...movingCards);
             updateScore(10);
             saveData();
-            clearSelectedState();
-            gameUpdater();
-            checkWinner();
+            
             return true;
         
 }
@@ -273,7 +272,7 @@ document.addEventListener("pointerdown", (e)=> {
         if (!topCard || topCard.id !== id) return;
 
         gameState.sourceType = "waste";
-        gameState.sourceIndex = "null";
+        gameState.sourceIndex = null;
         gameState.selectedCardIndexInSource = gameState.waste.length - 1;
         gameState.selectedCards = [topCard];
     }
@@ -353,7 +352,7 @@ const handleWastepile = ()=> {
     
     
     if (gameState.deck.length===0) {
-        if (gameState.waste.length>0) updateScore(-20);
+        if (gameState.waste.length>0) updateScore(gameState.drawCount === 1 ? -100 : -20);
          while (gameState.waste.length>0) {
             const card = gameState.waste.pop();
             card.isFaceUp = false;
@@ -362,7 +361,7 @@ const handleWastepile = ()=> {
         }
     }else {
         gameState.waste.forEach((card)=> card.isDraggable=false);
-        const noOfCardsToDraw  = Math.min(3,gameState.deck.length);
+        const noOfCardsToDraw  = Math.min(gameState.drawCount,gameState.deck.length);
         for (let i=0;i<noOfCardsToDraw;i++) {
             const card = gameState.deck.pop();
             card.isFaceUp = true;
@@ -465,6 +464,23 @@ const startGame = ()=> {
         resetGame();
     } 
 }
+
+const modeSelect = getElement("mode-select", "id");
+
+const saveMode = parseInt(localStorage.getItem("SolitareDrawMode"));
+if (saveMode === 1 || saveMode === 3) gameState.drawCount = saveMode;
+modeSelect.value = gameState.drawCount;
+
+modeSelect.addEventListener("change", ()=> {
+    if(confirm("Changing difficulty starts a new game. Continue?")) {
+        gameState.drawCount = parseInt(modeSelect.value);
+        localStorage.setItem("SolitareDrawMode", gameState.drawCount);
+        resetGame();
+    }else {
+        modeSelect.value = gameState.drawCount;
+    }
+})
+
 startGame();
 
 
