@@ -34,7 +34,6 @@ suits.forEach((suit)=>cardRanks.forEach((rank)=> deck.push(
         rankSymbol:rank.rankSymbol,
         color:suit.color,
         isFaceUp:false,
-        isDraggable:false,
     }
 )));
 return deck;
@@ -66,7 +65,7 @@ const deckShuffle = ()=> {
                 const cardArray = gameState.deck.splice(cardIndex,1);
                 const card = cardArray[0];
                 card.isFaceUp=true;
-                card.isDraggable=true;
+                
                 gameState.tableau[i].push(card);
                 continue;
                 
@@ -100,7 +99,7 @@ const cardElementCreator = (card)=> {
 
     const faceDownCard = (`<div class="face-down-card"></div>`);
     return (
-        `<div class="card ${card.color}" id="${card.id}" draggable=${(card.isDraggable && card.isFaceUp) ? true : false}>
+        `<div class="card ${card.color}" id="${card.id}">
         ${card.isFaceUp ? faceUpCard : faceDownCard}
         </div>`
     )
@@ -203,80 +202,25 @@ const isTableauDropValid = (cards,tableau) => {
     
 };
 
+let drag=null;
+
+const dropCardOnTableau = (index) => {
+    if (!gameState.isSelected || gameState.selectedCards.length ===0) return false;
+    const isSameSource = (gameState.sourceType==="tableau" && gameState.sourceIndex===index);
+    if (isSameSource || !isTableauDropValid(gameState.selectedCards,gameState.tableau[index])) return false; 
+    const movingCards = gameState.selectedCards;
+    cardRemoverFromSource();
+    gameState.tableau[index].push(...movingCards);
+    updateScore(gameState.sourceType==="waste" ? 5 : 0);
+    saveData();
+    return true;
+} 
+
+const dropCardOnFoundation = (index) => {
+        if (!gameState.isSelected || gameState.selectedCards.length === 0) return false;
 
 
-gameState.tableau.forEach((_,index)=> {
-    const currentTableau = getElement(`tableau-${index}`,"id");
-    if (!currentTableau) return ;
-
-        currentTableau.addEventListener("dragstart",(e)=> {
-            const cardElement = e.target.closest(".card");
-
-            if (!cardElement) return ;
-
-                const draggedCardId = parseInt(cardElement.id);
-                const cardSource = gameState.tableau[index];
-                const highestSelectedCardIndex = cardSource.findIndex(selCard=> selCard.id === draggedCardId);
-                
-                
-                if (highestSelectedCardIndex !== -1 && cardSource[highestSelectedCardIndex].isFaceUp) {
-                    
-                    
-                    gameState.isSelected = true;
-                    gameState.sourceType = "tableau";
-                    gameState.sourceIndex =index;
-                    gameState.selectedCardIndexInSource = highestSelectedCardIndex;
-                    gameState.selectedCards = cardSource.slice(highestSelectedCardIndex);
-                    
-
-                    
-
-                }else {
-                    e.preventDefault();
-                }
-            
-            
-        }
-        );
-
-        currentTableau.addEventListener("dragover",(e)=> {
-            e.preventDefault();
-        });
-        currentTableau.addEventListener("drop",(e)=> {
-            e.preventDefault();
-
-            if (!gameState.isSelected || gameState.selectedCards.length ===0) return;
-            const isSameSource = (gameState.sourceType==="tableau" && gameState.sourceIndex===index);
-
-                if (!isSameSource && isTableauDropValid(gameState.selectedCards,gameState.tableau[index])) {
-                    const movingCards = gameState.selectedCards;
-                    cardRemoverFromSource();
-                    gameState.tableau[index].push(...movingCards);
-                    updateScore(gameState.sourceType==="waste" ? 5 : 0);
-                    saveData();
-                }
-            clearSelectedState();
-            gameUpdater();
-        });
-     
-
-});
-
-gameState.foundations.forEach((_,index)=> {
-    const currentFoundation = getElement(`foundation-pile-${index}`,"id");
-    if (!currentFoundation) return ;
-
-         currentFoundation.addEventListener("dragover",(e)=> {
-        e.preventDefault();
-    })
-
-    currentFoundation.addEventListener("drop",(e)=> {
-        e.preventDefault();
-
-        if (!gameState.isSelected || gameState.selectedCards.length === 0) return;
-
-
-        if (isFoundationDropValid(gameState.selectedCards,gameState.foundations[index])) {
+        if (!isFoundationDropValid(gameState.selectedCards,gameState.foundations[index])) return false;
             const movingCards = gameState.selectedCards;
             cardRemoverFromSource();
             gameState.foundations[index].push(...movingCards);
@@ -285,42 +229,109 @@ gameState.foundations.forEach((_,index)=> {
             clearSelectedState();
             gameUpdater();
             checkWinner();
-            return;
-        }
-        clearSelectedState();
-        gameUpdater();
+            return true;
         
-    })
-    
-   
-})
+}
 
+const finishDrag = ()=> {
+    if(drag && drag.ghost) drag.ghost.remove();
+    drag=null;
+    clearSelectedState();
+    gameUpdater();
+}
 
+document.addEventListener("pointerdown", (e)=> {
+    if (drag) return;
+    if (e.pointerType === "mouse" && e.button !==0) return;
 
-const wastePile = getElement("waste-pile","id");
-wastePile.addEventListener("dragstart",(e)=> {
-    const cardElement = e.target.closest(".card");
-    if (!cardElement) return;
+    const cardEl = e.target.closest(".card");
+    if (!cardEl) return;
 
-    const topCard = gameState.waste[gameState.waste.length-1];
-    if (topCard && topCard.id === parseInt(cardElement.id)) {
-        gameState.isSelected = true;
+    const id = parseInt(cardEl.id);
+
+    const tableauEl = cardEl.closest(".tableau");
+    const wasteEl = cardEl.closest("#waste-pile");
+
+    if (tableauEl) {
+        const index = parseInt(tableauEl.id.split("-")[1]);
+        const pile = gameState.tableau[index];
+        const cardIndex = pile.findIndex((c)=> c.id === id);
+        if (cardIndex === -1 || !pile[cardIndex].isFaceUp) return;
+
+        gameState.sourceType = "tableau";
+        gameState.sourceIndex = index;
+        gameState.selectedCardIndexInSource = cardIndex;
+        gameState.selectedCards = pile.slice(cardIndex);
+    }
+    else if (wasteEl) {
+        const topCard = gameState.waste[gameState.waste.length - 1];
+        if (!topCard || topCard.id !== id) return;
+
         gameState.sourceType = "waste";
-        gameState.sourceIndex = null;
+        gameState.sourceIndex = "null";
         gameState.selectedCardIndexInSource = gameState.waste.length - 1;
         gameState.selectedCards = [topCard];
-    }else {
-        e.preventDefault();
     }
-                       
-})
+    else {
+        return;
+    }
 
-
-document.addEventListener("dragend",()=> {
-  clearSelectedState();
-  gameUpdater();
+    gameState.isSelected = true;
+    const rect = cardEl.getBoundingClientRect();
+    drag = {
+        startX: e.clientX,
+        startY: e.clientY,
+        offsetX: e.clientX - rect.left,
+        offsetY: e.clientY - rect.top,
+        ghost:null,
+    };
 });
 
+
+document.addEventListener("pointermove",(e)=> {
+    if(!drag) return;
+
+    if(!drag.ghost) {
+
+        if (Math.hypot(e.clientX - drag.startX, e.clientY - drag.startY) < 5) return;
+
+        gameState.selectedCards.forEach((c)=> {
+            const el = getElement(c.id,"id");
+            if (el) el.classList.add("drag-hidden");
+        });
+
+        const ghost = document.createElement("div");
+        ghost.className = "drag-ghost";
+        ghost.innerHTML = gameState.selectedCards.map((c)=> cardElementCreator(c)).join("");
+        ghost.querySelectorAll(".card").forEach((c)=> c.removeAttribute("id"));
+        document.body.appendChild(ghost);
+        drag.ghost = ghost;
+    }
+
+    drag.ghost.style.transform = `translate(${e.clientX - drag.offsetX}px, ${e.clientY - drag.offsetY}px)`;
+});
+
+document.addEventListener("pointerup", (e)=> {
+    if(!drag) return;
+     let won = false;
+     if (drag.ghost) {
+        const target = document.elementFromPoint(e.clientX, e.clientY);
+        const tableauEl = target && target.closest(".tableau");
+        const foundationEl = target && target.closest(".foundation-pile");
+        
+        if (tableauEl) {
+            dropCardOnTableau(parseInt(tableauEl.id.split("-")[1]));
+        }
+        else if (foundationEl) {
+            won = dropCardOnFoundation(parseInt(foundationEl.id.split("-")[2]));
+        }
+     }
+
+     finishDrag();
+     if (won) checkWinner();
+})
+
+document.addEventListener("pointercancel",finishDrag);
 
 const handleWastepile = ()=> {
     
